@@ -142,3 +142,16 @@ Firebase створює наш проєкт
 
 Наша база даних створена. Тепер з нею можна працювати.
 ![DB is created](./assets/11.png)
+
+Створимо колекцію. Для цього натискаємо на опцію "Start collection"
+![Create collection](./assets/12.png)
+
+Задаємо ім'я для колеції
+![Name collection](./assets/13.png)
+
+Налаштовуємо наш запис, документ. Додаємо значення.
+Натискаємо на "Save"
+![Document creation](./assets/14.png)
+
+Отримуємо документ у нашій колекції.
+![Document is saved to the collection](./assets/15.png)
