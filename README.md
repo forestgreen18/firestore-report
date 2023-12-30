@@ -155,3 +155,153 @@ Firebase створює наш проєкт
 
 Отримуємо документ у нашій колекції.
 ![Document is saved to the collection](./assets/15.png)
+
+Щоб піключити наш додаток до Firebase та використати Firestore
+переходимо на головну сторінку проєкту та вибираємо опцію "Add app".
+Після чого вибираємо потрібний тип додатку. Я продемонструю роботу з web app.
+![Web app creation](./assets/16.png)
+
+Далі налаштовуємо параметри для додатка. Та натискаємо на "Register app"
+
+![App registration](./assets/17.png)
+
+Далі Firebase дає нам деякі інструкції щодо підключення нашої бази даних до додатка.
+Зверніть увагу на Firebase configuration зміну, вона містить api ключ для підключення нашого додатка до
+бази даних.
+![Firebase config](./assets/18.png)
+
+Я створив невеличкий вебдодаток за допомогою фреймворка React.js для демонстрації інтеграції Firebase та вебдодатка.
+_useAddMovie.tsx_
+
+```tsx
+import { useState } from "react";
+import { collection, addDoc, getFirestore } from "firebase/firestore";
+import { initializeApp, FirebaseError } from "firebase/app";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID,
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Get a reference to your Firestore database
+const db = getFirestore(app);
+
+// Get a reference to your movies collection
+const moviesCollection = collection(db, "movies");
+
+export type TMovieRecord = {
+  director: string;
+  title: string;
+  year: number;
+};
+
+const useAddMovie = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const addMovie = async (movie: TMovieRecord) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const docRef = await addDoc(moviesCollection, movie);
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      if (e instanceof FirebaseError) {
+        setError(e.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { addMovie, loading, error };
+};
+
+export default useAddMovie;
+```
+
+_MovieForm_
+
+```tsx
+import useAddMovie, { TMovieRecord } from "../../hooks/useAddMovie";
+
+export function MovieForm() {
+  const { addMovie, loading, error } = useAddMovie();
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get("title");
+    const director = formData.get("director");
+    const year = Number(formData.get("year"));
+
+    if (
+      typeof title === "string" &&
+      typeof director === "string" &&
+      typeof year === "number"
+    ) {
+      const movie: TMovieRecord = {
+        title,
+        director,
+        year,
+      };
+      addMovie(movie);
+    }
+  };
+
+  return (
+    <form className="movie-form" onSubmit={handleSubmit}>
+      <input
+        className="movie-input"
+        name="title"
+        placeholder="Title"
+        required
+      />
+      <input
+        className="movie-input"
+        name="director"
+        placeholder="Director"
+        required
+      />
+      <input className="movie-input" name="year" placeholder="Year" required />
+      <button className="movie-button" type="submit" disabled={loading}>
+        {loading ? "Loading..." : "Add Movie"}
+      </button>
+      {error && <div className="movie-error">Error: {error}</div>}
+    </form>
+  );
+}
+```
+
+_App.tsx_
+
+```tsx
+import "./App.css";
+import { MovieForm } from "./components/MovieForm";
+
+function App() {
+  return (
+    <div className="App">
+      <MovieForm />
+    </div>
+  );
+}
+
+export default App;
+```
+
+Протестуємо роботу додатка додавши новий запис у базу даних.
+![Add new document to the collection](./assets/19.png)
+
+Отримуємо новий запис у базі.
+![Document is saved](./assets/20.png)
